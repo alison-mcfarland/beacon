@@ -5,6 +5,39 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Beacon Model – Interactive Grid</title>
   <style>
+    /* Site-wide top menu (keeps your existing page header intact) */
+:root { --site-header-h: 56px; }
+
+.site-header{
+  position: sticky;
+  top: 0;
+  background: #fff;
+  border-bottom: 1px solid #e5e7eb;
+  z-index: 1000;
+}
+.site-nav{
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  padding: 12px 20px;
+}
+.site-nav a{
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: #156082;
+  text-decoration: none;
+}
+.site-nav a:hover{ background: #f3f4f6; text-decoration: none; }
+
+/* Make the detail overlay sit below the fixed menu */
+.detail {
+  position: fixed;
+  left: 0; right: 0; bottom: 0; top: var(--site-header-h); /* replaces inset:0 */
+  background: #ffffff; display: none; overflow: auto;
+}
+
     :root {
       --bg: #0b0c10;
       --card: #ffffff;
@@ -89,6 +122,17 @@
   </style>
 </head>
 <body>
+  <!-- Site menu (separate from your page header below) -->
+<div class="site-header">
+  <nav class="site-nav">
+    <a href="../">Home</a>
+    <a href="../about/">About BEACON</a>
+    <a href="../components/">BEACON Components</a>
+    <a href="./" aria-current="page">Interactive Tool</a>
+    <a href="../resources/">Practical Resources</a>
+  </nav>
+</div>
+
   <header>
     <h1><strong>BEACON</strong> – Interactive Grid</h1>
     <p class="lead">Click a box to open a focused page with the details (What & Why, Self‑Evaluation Questions, Suggestions for Practice). You can right‑click a box and choose “Open link in new tab” to view it in a new page.</p>
