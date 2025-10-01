@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Beacon Model – Interactive Grid</title>
+  <style>
+    :root {
+      --bg: #0b0c10;
+      --card: #ffffff;
+      --text: #0b1220;
+      --muted: #55607a;
+      --pill: #eef2ff;
+      --radius: 16px;
+      --shadow: 0 10px 30px rgba(0,0,0,.12);
+      /* BEACON palette (tweak as needed) */
+      --brand: #59514B; /* KBS pebble */
+      --belonging: #4EA72E;  /* green */
+      --equity:    #E97132;  /* orange */
+      --agency:    #156082;  /* teal */
+      --crit:      #A02B93;  /* purple */
+      --open:      #F7BC39;  /* yellow */
+    }
+
+    html, body {
+      margin: 0; padding: 0; background: #f6f7fb; color: var(--text); font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+    }
+
+    header { max-width: 1100px; margin: 40px auto 16px; padding: 0 20px; }
+
+    h1 { font-size: 28px; margin: 0 0 8px; letter-spacing:.2px; }
+    h1 strong { color: var(--brand); }
+    p.lead { color: var(--muted); margin: 0 0 20px; }
+
+    h1 { font-size: 28px; margin: 0 0 8px; }
+    p.lead { color: var(--muted); margin: 0 0 20px; }
+
+    /* Filter bar */
+    .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 8px 0 18px; }
+    .pill { border: 1px solid #e5e7eb; background: var(--pill); border-radius: 999px; padding: 6px 12px; cursor: pointer; user-select: none; font-size: 14px; }
+    .pill[aria-pressed="true"] { background: #dbeafe; border-color: #bfdbfe; }
+    /* Themed pills */
+    .filters .pill[data-filter="Belonging"][aria-pressed="true"] { background: var(--belonging); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Equity"][aria-pressed="true"] { background: var(--equity); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Agency"][aria-pressed="true"] { background: var(--agency); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Critical Disruption"][aria-pressed="true"] { background: var(--crit); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Openness"][aria-pressed="true"] { background: var(--open); color:#fff; border-color: transparent; }
+    .pill { border: 1px solid #e5e7eb; background: var(--pill); border-radius: 999px; padding: 6px 12px; cursor: pointer; user-select: none; font-size: 14px; }
+    .pill[aria-pressed="true"] { background: #dbeafe; border-color: #bfdbfe; }
+    /* Themed pills */
+    .filters .pill[data-filter="Belonging":[aria-pressed="true"]] { background: var(--belonging); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Equity"][aria-pressed="true"] { background: var(--equity); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Agency"][aria-pressed="true"] { background: var(--agency); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Critical Disruption"][aria-pressed="true"] { background: var(--crit); color:#fff; border-color: transparent; }
+    .filters .pill[data-filter="Openness"][aria-pressed="true"] { background: var(--open); color:#fff; border-color: transparent; }
+
+    /* Grid */
+    .grid-wrap { max-width: 1100px; margin: 0 auto 60px; padding: 0 20px; }
+    .grid { display: grid; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 14px; }
+    @media (min-width: 640px) { .grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (min-width: 900px) { .grid { grid-template-columns: repeat(4, 1fr); } }
+
+    .card { background: var(--card); border-radius: var(--radius); box-shadow: var(--shadow); padding: 16px; display: flex; flex-direction: column; gap: 8px; border: 1px solid #eef2f7; position:relative; overflow:hidden; }
+    .card::before { content:""; position:absolute; inset:0; height:6px; background: var(--brand); }
+    .card h3 { font-size: 16px; margin: 6px 0 0; line-height: 1.25; }
+    .card h3 { font-size: 16px; margin: 0; line-height: 1.2; }
+    .badge { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; background: #f1f5f9; color: #334155; border-radius: 999px; padding: 4px 8px; margin-top: 4px; }
+    .area { font-weight: 600; }
+    .theme { color: var(--muted); }
+    .card button, .card a { margin-top: 8px; display: inline-flex; align-items: center; gap: 8px; border: 0; background: var(--brand); color: white; padding: 8px 10px; border-radius: 10px; cursor: pointer; text-decoration: none; font-size: 14px; }
+    .card button:hover, .card a:hover { opacity: .9; }
+
+    /* Detail view */
+    .detail { position: fixed; inset: 0; background: #ffffff; display: none; overflow: auto; }
+    .detail.open { display: block; }
+    .detail-inner { max-width: 900px; margin: 0 auto; padding: 28px 20px 60px; }
+    .detail h2 { margin: 0 0 6px; font-size: 26px; }
+    .detail .crumbs { color: var(--muted); margin: 0 0 18px; }
+    .detail .meta { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 18px; }
+    .detail .pill { background:#f8fafc; border-color:#e2e8f0; }
+    .detail .section { background: #f8fafc; border: 1px solid #e5e7eb; border-radius: 14px; padding: 16px; margin: 14px 0; }
+    .detail h4 { margin: 0 0 10px; font-size: 16px; }
+
+    .topbar { position: sticky; top: 0; background: #ffffffcc; backdrop-filter: blur(8px); border-bottom:1px solid #e5e7eb; padding: 10px 0; margin: -28px 0 20px; }
+    .topbar .wrap { max-width: 900px; margin: 0 auto; padding: 0 20px; display:flex; align-items:center; gap:10px; }
+    .ghost { background: transparent; color: #111827; border: 1px solid #e5e7eb; }
+
+    footer { max-width: 1100px; margin: 10px auto 40px; padding: 0 20px; color: var(--muted); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1><strong>BEACON</strong> – Interactive Grid</h1>
+    <p class="lead">Click a box to open a focused page with the details (What & Why, Self‑Evaluation Questions, Suggestions for Practice). You can right‑click a box and choose “Open link in new tab” to view it in a new page.</p>
+
+    <!-- Theme filters (optional) -->
+    <div class="filters" role="toolbar" aria-label="Filter by theme">
+      <button class="pill" data-filter="all" aria-pressed="true">All</button>
+      <button class="pill" data-filter="Belonging">Belonging</button>
+      <button class="pill" data-filter="Equity">Equity</button>
+      <button class="pill" data-filter="Agency">Agency</button>
+      <button class="pill" data-filter="Critical Disruption">Critical Disruption</button>
+      <button class="pill" data-filter="Openness">Openness</button>
+    </div>
+  </header>
+
+  <main class="grid-wrap">
+    <section class="grid" id="grid" aria-label="Beacon grid"></section>
+  </main>
+
+  <!-- Detail view (single page app style) -->
+  <div class="detail" id="detail" role="dialog" aria-modal="true" aria-labelledby="detail-title">
+    <div class="topbar">
+      <div class="wrap">
+        <button class="pill ghost" id="backBtn" aria-label="Back to grid">← Back</button>
+        <a class="pill" id="openNewTab" target="_blank" rel="noopener">Open this page in a new tab ↗</a>
+      </div>
+    </div>
+
+    <div class="detail-inner">
+      <p class="crumbs" id="crumbs"></p>
+      <h2 id="detail-title"></h2>
+      <div class="meta" id="meta"></div>
+
+      <article id="detail-content"></article>
+    </div>
+  </div>
+
+
+ <script>
+  // --- DATA ---------------------------------------------------------------
+  // id must be unique. theme ∈ [Belonging, Equity, Agency, Critical Disruption, Openness]
+  // area ∈ [Content, Pedagogic Interaction, Assessment, Learning Journey]
+
+  const ITEMS = [
+    // -------------------- BELONGING --------------------
+    {
+      id: 'belonging-content', theme: 'Belonging', area: 'Content',
+      whatWhy: `Content that affirms and reflects a broad spectrum of student identities (e.g., race, ethnicity, gender, disability, neurodivergence, religion, culture, and socio-economic background); supporting students to feel recognised and included.`,
+      questions: [
+        `How do your content choices affirm the identities, communities, and lived realities of your students?`,
+        `In what ways might students feel seen, marginalised, or misrepresented in your teaching materials?`
+      ],
+      suggestions: [
+        `Review slide deck images: do the people featured reflect a diverse range of identities (e.g., ethnicities, gender identities, disabilities) taking on powerful and impactful roles in business? Consider sourcing or generating different images based on your needs.`,
+        `Review teaching examples and case studies: do the examples draw on reflect diverse lived experience (e.g., protagonists using they/them pronouns; diversified names; diverse contextual backgrounds such as low SES, different religious holidays, etc.)?`
+      ]
+    },
+    {
+      id: 'belonging-pedagogic-interaction', theme: 'Belonging', area: 'Pedagogic Interaction',
+      whatWhy: `Interactions that build emotional safety, trust, and respect; creating a climate where students feel welcomed, valued, and able to bring their ‘whole self’ into the classroom.`,
+      questions: [
+        `What unspoken cues might shape who feels confident, cautious, or silenced in your learning environment?`,
+        `How do you build relational trust and demonstrate respect for diverse student identities?`
+      ],
+      suggestions: [
+        `Personalise student interactions: use students’ names in interactions (learn them, if feasible in your module) and create informal ways to connect, such as staying behind after class for a few minutes or offering office hour drop-ins.`,
+        `Reduce participation pressure: provide multiple low-stakes ways for students to engage, such as anonymous tools like Mentimeter, to surface questions or reflections they may not feel comfortable expressing aloud.`,
+        `Share personal identities and positionality: where appropriate, share aspects of your own background or lived experience (e.g., cultural background, LGBTQ+, neurodivergence) to model authenticity and signal that difference is welcomed and safe.`
+      ]
+    },
+    {
+      id: 'belonging-assessment', theme: 'Belonging', area: 'Assessment',
+      whatWhy: `Assessment practices that affirm students’ identities and foster a sense of safety and encouragement; helping students feel they belong in academic spaces.`,
+      questions: [
+        `How do your assessment practices affirm students’ identities and lived realities—helping them feel seen and valued as learners?`,
+        `What steps do you take to reduce anxiety and build confidence around assessment, especially for students who may feel unsure or excluded?`
+      ],
+      suggestions: [
+        `Use affirming assessment formats: integrate low-stakes practice tasks, open-book exam formats, and/or staged submissions that break complex tasks into manageable parts, to reduce anxiety, build confidence, and help students feel like they belong in the academic space.`,
+        `Include identity-relevant entry points: allow students to connect assessment topics to their lived experiences, values, or future goals.`
+      ]
+    },
+    {
+      id: 'belonging-learning-journey', theme: 'Belonging', area: 'Learning Journey',
+      whatWhy: `Module design that supports connection and inclusion; ensuring students feel part of the learning community throughout the module.`,
+      questions: [
+        `How does the structure of your module help students feel part of a learning community—connected to each other, to you, and to the purpose of the module?`,
+        `What patterns of participation, engagement (and/or silence) might reveal who is connecting with the learning journey, and who is not?`
+      ],
+      suggestions: [
+        `Create early social connection: use welcome videos, short personal intros, discussion forums, or early group tasks to help students feel seen and build community from the start.`,
+        `Foster a sense of shared direction: introduce learning outcomes in relatable language and return to them during key points in the module so students can see progress and relevance.`,
+        `Surface invisible disengagement: regularly check for patterns of silence or non-participation using digital tools (e.g., polls, Keats analytics, new attendance monitoring system), and identify ways to re-engage students.`
+      ]
+    },
+
+    // -------------------- EQUITY --------------------
+    {
+      id: 'equity-content', theme: 'Equity', area: 'Content',
+      whatWhy: `Content that is accessible to all students, avoiding assumptions about prior knowledge, cost, cultural familiarity, etc.; ensuring all students can meaningfully engage.`,
+      questions: [
+        `What assumptions about prior knowledge, access, or experience are embedded in your content?`,
+        `How do you anticipate and address structural barriers students may face in engaging with materials?`
+      ],
+      suggestions: [
+        `Guides for technical content: Provide glossaries or crib sheets that do not assume shared prior knowledge and/or English language skills.`,
+        `Open access content: Provide open resources where possible (including e-books accessible via KCL account), and reduce reliance on physical textbooks that may disadvantage students on a low income.`,
+        `Accessible content: Ensure accessibility requirements are met (e.g., alt text, captions/transcripts for videos) so that learners with visual or auditory impairments are not disadvantaged.`
+      ]
+    },
+    {
+      id: 'equity-pedagogic-interaction', theme: 'Equity', area: 'Pedagogic Interaction',
+      whatWhy: `Interactions that respond to unequal starting points and remove barriers to participation; promoting fairness and enabling equality of access across diverse student needs.`,
+      questions: [
+        `How do you adapt your teaching practices to account for students who may be starting from different places (e.g., academically, socially, or structurally) and give voice to all students?`,
+        `In what ways do you actively make support visible, timely, and accessible for all learners?`
+      ],
+      suggestions: [
+        `Make support visible and consistent: regularly remind students how to access help (e.g., office hours, revision sessions), and build support references into your slides, Keats pages, and in-class routines to avoid relying on initiative or insider knowledge.`,
+        `Support non-native English speakers in interactions: give space for thinking time before discussion, use written alternatives (e.g., chat, shared documents), and offer language scaffolds where complex terminology may affect students' ability to engage confidently.`,
+        `Create peer support opportunities: such as ‘study buddies’ or ‘study groups’ where students can draw on peer learning.`
+      ]
+    },
+    {
+      id: 'equity-assessment', theme: 'Equity', area: 'Assessment',
+      whatWhy: `Assessment practices that account for diverse needs/life contexts and provide transparent expectations; giving all students an opportunity to succeed.`,
+      questions: [
+        `What students or groups (if any) might be advantaged by your current assessment process, and how could you mitigate this?`,
+        `What forms of flexibility or scaffolding of assessment do you provide to ensure fair access to success?`
+      ],
+      suggestions: [
+        `Demystify academic expectations: provide annotated examples that explain what quality looks like, and how to achieve it.`,
+        `Scrutinise hidden assumptions: review assessments for implicit background knowledge, social capital, or logistical demands that may unfairly advantage some students (e.g., requiring extensive group work outside scheduled class time may disadvantage carers or low-income students who rely on part-time work).`,
+        `Scaffold towards summative tasks: use structured formative assessments to support skill-building and reduce gaps in starting points.`
+      ]
+    },
+    {
+      id: 'equity-learning-journey', theme: 'Equity', area: 'Learning Journey',
+      whatWhy: `Module design that anticipates and responds to learning barriers; supporting all students to progress and participate on an equitable footing.`,
+      questions: [
+        `What parts of the learning journey are likely to be harder for some students, and how can you support those moments so that students stay engaged and succeed?`,
+        `How do you create a learning environment where seeking support and struggling with content are seen as normal, expected parts of learning, not signs of failure?`
+      ],
+      suggestions: [
+        `Identify ‘pain points’: review the flow and balance of teaching materials to identify places where students typically struggle and fall behind, and provide additional support mechanisms.`,
+        `Normalise struggle and support-seeking: explicitly name difficult concepts, describe why they’re hard, and embed help-seeking prompts into learning pathways.`,
+        `Audit for structural barriers: where possible, provide flexibility on timelines, expectations and pacing, to reduce disadvantage for students from diverse backgrounds.`
+      ]
+    },
+
+    // -------------------- AGENCY --------------------
+    {
+      id: 'agency-content', theme: 'Agency', area: 'Content',
+      whatWhy: `Content that is co-developed, shaped or adapted by students; enabling them to influence what is explored.`,
+      questions: [
+        `How do students participate in shaping what content is explored, and whose knowledge is prioritised?`,
+        `What opportunities exist for students to challenge, expand, or adapt the syllabus?`
+      ],
+      suggestions: [
+        `Students choose topics: conduct a poll or survey to identify topics of interest to the students, and adapt teaching content based on the results.`,
+        `Students generate examples to support teaching content: Invite students to bring in meaningful examples (readings, case studies, etc.) to supplement a theory or approach, either during class or via a shared digital format such as Keats.`
+      ]
+    },
+    {
+      id: 'agency-pedagogic-interaction', theme: 'Agency', area: 'Pedagogic Interaction',
+      whatWhy: `Interactions that support student voice, decision-making, and autonomy; empowering students to influence how learning unfolds.`,
+      questions: [
+        `How do students contribute to shaping the flow and dynamics of classroom interaction?`,
+        `What forms of choice, authorship, or leadership do students experience in the learning process?`
+      ],
+      suggestions: [
+        `Students co-steer classroom discussion: invite students to contribute examples or questions that shape the direction of live dialogue.`,
+        `Use student-led facilitation: give students opportunities to lead segments of class time, e.g., through flipped learning, peer-teaching, etc.`
+      ]
+    },
+    {
+      id: 'agency-assessment', theme: 'Agency', area: 'Assessment',
+      whatWhy: `Assessment practices that offer meaningful choice and flexibility; allowing students to take ownership over how they demonstrate learning.`,
+      questions: [
+        `In what ways can students shape the content, focus, or framing of assessment tasks?`,
+        `How do students have a voice in how their assessed work is developed, revised, or interpreted?`
+      ],
+      suggestions: [
+        `Personalisation of assessment: give students a choice of topic, framing or format.`,
+        `Co-create assessment criteria: invite students to contribute to marking rubrics and criteria.`,
+        `Invite resubmission and reflection: build in opportunities for students to revise and resubmit after feedback, with reflective commentary on changes made.`
+      ]
+    },
+    {
+      id: 'agency-learning-journey', theme: 'Agency', area: 'Learning Journey',
+      whatWhy: `Module design that is influenced or co-developed by students; enabling them to influence the pacing, sequence, or focus of their learning.`,
+      questions: [
+        `How do students co-direct the pacing, sequence, or priorities within the module?`,
+        `What formal or informal mechanisms allow students to take ownership of learning outcomes?`
+      ],
+      suggestions: [
+        `Offer branching/optional content paths: give students optional topics, tasks or readings that let them explore subthemes of interest within the module’s core structure.`,
+        `Respond to mid-module feedback: invite students to share how the pace, format or materials are working for them, and make small visible adjustments in response.`,
+        `Co-create part of the journey: collaboratively build one week or theme with student input on the content or questions explored (or the learning outcomes achieved).`
+      ]
+    },
+
+    // ----------- CRITICAL DISRUPTION -----------
+    {
+      id: 'critical-disruption-content', theme: 'Critical Disruption', area: 'Content',
+      whatWhy: `Content that challenges dominant norms, reveals exclusions, and interrogates the systems through which knowledge is constructed; equipping students to critique what is valued, silenced, or taken for granted.`,
+      questions: [
+        `What power structures or dominant narratives are reinforced or disrupted by your content choices?`,
+        `How do students engage critically with the assumptions embedded in disciplinary knowledge or practice?`
+      ],
+      suggestions: [
+        `Critical reflection exercises: get students to analyse who is represented and who is erased in the foundational module content, e.g., what voices are excluded/included in the current reading list?`,
+        `Integrate historical context: teach students about the origins and development of theories or approaches to reveal their embedded assumptions and challenge the idea that knowledge is neutral or timeless.`,
+        `Interrogate dominant narratives: use comparative activities to highlight how some frameworks (e.g., Ubuntu research, degrowth economics) reveal assumptions in widely taught theories.`
+      ]
+    },
+    {
+      id: 'critical-disruption-pedagogic-interaction', theme: 'Critical Disruption', area: 'Pedagogic Interaction',
+      whatWhy: `Interactions that challenge the traditional educator–student hierarchy; enabling students to disrupt passive learning roles and co-construct power-aware pedagogic spaces.`,
+      questions: [
+        `Whose voices or ways of participating (whether your own, or a particular student group) tend to dominate in your classroom, and how do you intentionally disrupt that pattern?`,
+        `How do you create space for discomfort, dissent, or critical questioning in your teaching spaces?`
+      ],
+      suggestions: [
+        `Introduce discomfort as pedagogy: design activities that intentionally surface emotional, political, or ethical tensions in the content — and create structured ways to sit with, explore, and not resolve them too quickly.`,
+        `De-centre your own voice: reduce how often you speak first, summarise ideas, or resolve disagreement. Instead, let students build collective sense-making before you step in.`,
+        `Disrupt ‘neutral’ teaching stance: be transparent about your own biases, limitations, and positionality, showing that academic authority can include reflexivity and uncertainty.`
+      ]
+    },
+    {
+      id: 'critical-disruption-assessment', theme: 'Critical Disruption', area: 'Assessment',
+      whatWhy: `Assessment practices that support critique of social, institutional, or disciplinary systems, and that may themselves be questioned or reimagined as part of the learning process.`,
+      questions: [
+        `How do your assessments question or disrupt dominant assumptions about what counts as legitimate knowledge, reasoning, or expression in your discipline?`,
+        `How could your assessments avoid rewarding conformity to traditional norms, and instead invite students to challenge, subvert or reimagine those norms?`
+      ],
+      suggestions: [
+        `Invite criticality and positionality: design tasks that ask students to interrogate assumptions, challenge conventional models, or examine how their own standpoint shapes interpretation or analysis.`,
+        `Experiment with unorthodox formats: e.g., ‘unessays’, ‘unassessment’, non-traditional formats, embodied modes, etc.`
+      ]
+    },
+    {
+      id: 'critical-disruption-learning-journey', theme: 'Critical Disruption', area: 'Learning Journey',
+      whatWhy: `Module design that builds critical thinking over time and exposes the assumptions behind the learning journey; supporting students to question how knowledge is organised and who that serves.`,
+      questions: [
+        `How is critical thinking built into the core of the learning journey—not just once, but scaffolded over time?`,
+        `What assumptions shape how your module is structured, and how could the learning journey be reimagined?`
+      ],
+      suggestions: [
+        `Embed criticality across the learning arc: design the learning journey so that criticality is not confined to one week or topic, but sustained throughout, and developed through repeated opportunities to question assumptions and analyse power dynamics.`,
+        `‘Unmap’ the canon: instead of following traditional patterns of mainstream to radical perspectives, unsettle the default logic of linear learning and first teach alternative perspectives as the default, before later bringing in mainstream theories.`,
+        `Devolve pacing: crowdsource the learning rhythm by allowing students to decide how long they spend on certain topics, rather than following a fixed pacing and structure.`
+      ]
+    },
+
+    // -------------------- OPENNESS --------------------
+    {
+      id: 'openness-content', theme: 'Openness', area: 'Content',
+      whatWhy: `Content that draws from multiple knowledge systems and worldviews; inviting students to explore diverse perspectives and ways of knowing.`,
+      questions: [
+        `What kinds of knowledge, ways of knowing, or epistemologies are legitimised in your content?`,
+        `How do you invite students to explore multiple interpretations and worldviews in relation to core ideas?`
+      ],
+      suggestions: [
+        `Pluralistic content: Include case studies, examples, readings, and theories from a range of perspectives (particularly focused on including voices outside the global North and corporate business). And/or ask students to reflect on how well existing cases would translate into new contexts.`,
+        `Vary reading sources: incorporate multiple ways for students to consume knowledge outside of traditional textbooks and journal articles, such as videos, podcasts, new articles, magazines, etc.`,
+        `Guest speakers: include speakers and industry partners who can present alternative perspectives (e.g., different lived experience, academia vs practice perspectives).`
+      ]
+    },
+    {
+      id: 'openness-pedagogic-interaction', theme: 'Openness', area: 'Pedagogic Interaction',
+      whatWhy: `Interactions that facilitate diverse ways of engaging, questioning and collaborating; supporting students to participate beyond familiar norms and explore multiple perspectives in practice.`,
+      questions: [
+        `What participatory norms do students encounter in your classroom, and how do these expose them to unfamiliar or alternative ways of engaging?`,
+        `How do you create space for students to express themselves through multiple modes of interaction (e.g., communal, reflective, expressive, intuitive)?`
+      ],
+      suggestions: [
+        `Vary modes of participation: design classroom activities that allow for multiple ways of engaging and reflect different cultural norms, such as including small-group tasks for collectivist learners, anonymous polls for students from high-power-distance cultures, and reflective prompts for introspective learners.`,
+        `Model participatory plurality: share your own communication and learning preferences (e.g., preferring writing to speaking, processing things slowly) to demonstrate that there is no single “correct” way to participate in academic spaces.`,
+        `Displace the classroom: teach one or more weeks off-campus, in a different space, where students can explore material from a completely different perspective.`
+      ]
+    },
+    {
+      id: 'openness-assessment', theme: 'Openness', area: 'Assessment',
+      whatWhy: `Assessment practices that acknowledge and reward diverse perspectives and modes of reasoning; enabling students to demonstrate understanding through varied lenses, frameworks, and forms of expression.`,
+      questions: [
+        `What range of reasoning styles, interpretive lenses or modes of expression do your assessments allow?`,
+        `How do your assessments make space for complexity, ambiguity, or multiple valid interpretations, rather than privileging fixed or singular answers?`
+      ],
+      suggestions: [
+        `Perspective-taking tasks: design assessments that ask students to inhabit, represent, or analyse through an unfamiliar lens (cultural, theoretical, experiential, etc.)`,
+        `Interpretative plurality: design open-ended tasks that allow for multiple valid approaches or conclusions—encouraging students to explore ambiguity, nuance, and co-existing truths rather than seeking a single answer.`
+      ]
+    },
+    {
+      id: 'openness-learning-journey', theme: 'Openness', area: 'Learning Journey',
+      whatWhy: `Module design that immerses students in ongoing, plural ways of thinking; helping them shift perspectives, stay with contradictions, and sustain their engagement with openness over time.`,
+      questions: [
+        `How are multiple perspectives sustained throughout the arc of your module?`,
+        `When do students encounter ideas that conflict, and what do they do with those tensions and contradictions?`
+      ],
+      suggestions: [
+        `Sustain epistemic plurality: distribute diverse authors, case studies, and modes of thinking across the full module arc—not just one “diversity” session.`,
+        `Build conceptual layering: revisit the same issue from multiple lenses across the module (e.g., economic, cultural, historical), encouraging comparison.`
+      ]
+    }
+  ];
+
+  // --- RENDER GRID --------------------------------------------------------
+  const grid = document.getElementById('grid');
+
+  function makeCard(item) {
+    const el = document.createElement('article');
+    el.className = 'card';
+    el.dataset.theme = item.theme;
+    el.innerHTML = `
+      <span class="badge"><span class="area">${item.area}</span> • <span class="theme">${item.theme}</span></span>
+      <h3>${item.area} — ${item.theme}</h3>
+      <a href="?item=${item.id}" data-id="${item.id}" class="open">Open</a>
+    `;
+    const themeColor = item.theme === 'Belonging' ? getComputedStyle(document.documentElement).getPropertyValue('--belonging') :
+                      item.theme === 'Equity' ? getComputedStyle(document.documentElement).getPropertyValue('--equity') :
+                      item.theme === 'Agency' ? getComputedStyle(document.documentElement).getPropertyValue('--agency') :
+                      item.theme === 'Critical Disruption' ? getComputedStyle(document.documentElement).getPropertyValue('--crit') :
+                      getComputedStyle(document.documentElement).getPropertyValue('--open');
+    el.style.setProperty('--card-accent', themeColor);
+    el.style.setProperty('--brand', themeColor);
+    el.style.setProperty('--badge-fg', '#334155');
+    return el;
+  }
+
+  function renderGrid(filter = 'all') {
+    grid.innerHTML = '';
+    ITEMS.filter(it => filter === 'all' || it.theme === filter).forEach(it => grid.appendChild(makeCard(it)));
+  }
+
+  renderGrid();
+
+  // --- FILTERS -----------------------------------------------------------
+  const filterBtns = Array.from(document.querySelectorAll('.filters .pill'));
+  filterBtns.forEach(btn => btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+    btn.setAttribute('aria-pressed', 'true');
+    renderGrid(btn.dataset.filter);
+  }));
+
+  // --- DETAIL VIEW & ROUTING --------------------------------------------
+  const detail = document.getElementById('detail');
+  const backBtn = document.getElementById('backBtn');
+  const crumbs = document.getElementById('crumbs');
+  const title = document.getElementById('detail-title');
+  const meta = document.getElementById('meta');
+  const content = document.getElementById('detail-content');
+  const openNewTab = document.getElementById('openNewTab');
+
+  // Helper: bold text before first colon in suggestions, without changing the source strings
+  function formatSuggestion(s) {
+    const idx = s.indexOf(':');
+    if (idx === -1) return s;
+    const head = s.slice(0, idx).trim();
+    const tail = s.slice(idx + 1).trim();
+    return `<strong>${head}:</strong> ${tail}`;
+  }
+
+  function openDetail(id, push = true) {
+    const item = ITEMS.find(x => x.id === id);
+    if (!item) return;
+
+    crumbs.textContent = `${item.theme} › ${item.area}`;
+    title.textContent = `${item.area} — ${item.theme}`;
+    meta.innerHTML = `<span class="pill">${item.theme}</span><span class="pill">${item.area}</span>`;
+    content.innerHTML = `
+      <section class="section">
+        <h4>What & Why</h4>
+        <p>${item.whatWhy}</p>
+      </section>
+      <section class="section">
+        <h4>Self-Evaluation Questions</h4>
+        <ul>${item.questions.map(q => `<li>${q}</li>`).join('')}</ul>
+      </section>
+      <section class="section">
+        <h4>Suggestions for Practice</h4>
+        <ul>${item.suggestions.map(s => `<li>${formatSuggestion(s)}</li>`).join('')}</ul>
+      </section>
+    `;
+
+    const url = new URL(window.location);
+    url.searchParams.set('item', id);
+    if (push) history.pushState({ id }, '', url);
+    openNewTab.href = url.toString();
+
+    detail.classList.add('open');
+    detail.focus();
+  }
+
+  function closeDetail() {
+    detail.classList.remove('open');
+    const url = new URL(window.location);
+    url.searchParams.delete('item');
+    history.pushState({}, '', url);
+  }
+
+  document.addEventListener('click', (e) => {
+    const link = e.target.closest('a.open');
+    if (link) {
+      e.preventDefault();
+      openDetail(link.dataset.id);
+    }
+    if (e.target === detail) {
+      closeDetail();
+    }
+  });
+
+  backBtn.addEventListener('click', closeDetail);
+
+  window.addEventListener('popstate', () => {
+    const params = new URLSearchParams(location.search);
+    const id = params.get('item');
+    if (id) openDetail(id, false); else closeDetail();
+  });
+
+  // Deep link support on load
+  (function initFromURL(){
+    const params = new URLSearchParams(location.search);
+    const id = params.get('item');
+    if (id) openDetail(id, false);
+  })();
+</script>
+
+</body>
+</html>
