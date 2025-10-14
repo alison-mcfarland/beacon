@@ -130,6 +130,7 @@
   opacity: 1;
   text-decoration: none;
 }
+.filters-label { margin: 6px 0 -2px 2px; font-size: .9rem; color: var(--muted); font-weight: 600; }
 
   </style>
 </head>
@@ -148,19 +149,22 @@
   <header>
     <h1><strong>BEACON</strong> – Interactive Grid</h1>
     <p class="lead">Click a box to open a focused page with the details (What & Why, Self‑Evaluation Questions, Suggestions for Practice). You can right‑click a box and choose “Open link in new tab” to view it in a new page.</p>
-
-    <!-- Theme filters (optional) -->
-    <div class="filters" role="toolbar" aria-label="Filter by theme">
-      <button class="pill" data-filter="all" aria-pressed="true">All</button>
-      <button class="pill" data-filter="Belonging">Belonging</button>
-      <button class="pill" data-filter="Equity">Equity</button>
-      <button class="pill" data-filter="Agency">Agency</button>
-      <button class="pill" data-filter="Critical Disruption">Critical Disruption</button>
-      <button class="pill" data-filter="Openness">Openness</button>
-    </div>
-    <!-- Area filters (columns) -->
-<div class="filters" role="toolbar" aria-label="Filter by area" id="areaFilters">
-  <button class="pill" data-area="all" aria-pressed="true">All areas</button>
+  <!-- label for Principles -->
+  <p class="filters-label">Principles</p>
+    <!-- Principles filters -->
+<div class="filters" role="toolbar" aria-label="Filter by principle">
+  <button class="pill" data-filter="all" aria-pressed="true">All Principles</button>
+  <button class="pill" data-filter="Belonging">Belonging</button>
+  <button class="pill" data-filter="Equity">Equity</button>
+  <button class="pill" data-filter="Agency">Agency</button>
+  <button class="pill" data-filter="Critical Disruption">Critical Disruption</button>
+  <button class="pill" data-filter="Openness">Openness</button>
+</div>
+  <!-- label for Domains -->
+  <p class="filters-label">Domains</p>
+<!-- Domains filters -->
+<div class="filters" role="toolbar" aria-label="Filter by domain" id="areaFilters">
+  <button class="pill" data-area="all" aria-pressed="true">All Domains</button>
   <button class="pill" data-area="Content">Content</button>
   <button class="pill" data-area="Pedagogic Interaction">Pedagogic Interaction</button>
   <button class="pill" data-area="Assessment">Assessment</button>
