@@ -450,43 +450,62 @@
     }
   ];
 
-  // --- RENDER GRID --------------------------------------------------------
-  const grid = document.getElementById('grid');
+// --- GRID CORE (keep) ----------------------------------------------------
+const grid = document.getElementById('grid');
 
-  function makeCard(item) {
-    const el = document.createElement('article');
-    el.className = 'card';
-    el.dataset.theme = item.theme;
-    el.innerHTML = `
-      <span class="badge"><span class="area">${item.area}</span> • <span class="theme">${item.theme}</span></span>
-      <h3>${item.area} — ${item.theme}</h3>
-      <a href="?item=${item.id}" data-id="${item.id}" class="open">Open</a>
-    `;
-    const themeColor = item.theme === 'Belonging' ? getComputedStyle(document.documentElement).getPropertyValue('--belonging') :
-                      item.theme === 'Equity' ? getComputedStyle(document.documentElement).getPropertyValue('--equity') :
-                      item.theme === 'Agency' ? getComputedStyle(document.documentElement).getPropertyValue('--agency') :
-                      item.theme === 'Critical Disruption' ? getComputedStyle(document.documentElement).getPropertyValue('--crit') :
-                      getComputedStyle(document.documentElement).getPropertyValue('--open');
-    el.style.setProperty('--card-accent', themeColor);
-    el.style.setProperty('--brand', themeColor);
-    el.style.setProperty('--badge-fg', '#334155');
-    return el;
-  }
+function makeCard(item) {
+  const el = document.createElement('article');
+  el.className = 'card';
+  el.dataset.theme = item.theme;
+  el.innerHTML = `
+    <span class="badge"><span class="area">${item.area}</span> • <span class="theme">${item.theme}</span></span>
+    <h3>${item.area} — ${item.theme}</h3>
+    <a href="?item=${item.id}" data-id="${item.id}" class="open">Open</a>
+  `;
+  const themeColor =
+    item.theme === 'Belonging' ? getComputedStyle(document.documentElement).getPropertyValue('--belonging') :
+    item.theme === 'Equity' ? getComputedStyle(document.documentElement).getPropertyValue('--equity') :
+    item.theme === 'Agency' ? getComputedStyle(document.documentElement).getPropertyValue('--agency') :
+    item.theme === 'Critical Disruption' ? getComputedStyle(document.documentElement).getPropertyValue('--crit') :
+    getComputedStyle(document.documentElement).getPropertyValue('--open');
+  el.style.setProperty('--card-accent', themeColor);
+  el.style.setProperty('--brand', themeColor);
+  el.style.setProperty('--badge-fg', '#334155');
+  return el;
+}
 
-  function renderGrid(filter = 'all') {
-    grid.innerHTML = '';
-    ITEMS.filter(it => filter === 'all' || it.theme === filter).forEach(it => grid.appendChild(makeCard(it)));
-  }
+// --- GRID FILTERING (theme + area) --------------------------------------
+let activeTheme = 'all';
+let activeArea  = 'all';
 
+function renderGrid() {
+  grid.innerHTML = '';
+  ITEMS
+    .filter(it => (activeTheme === 'all' || it.theme === activeTheme))
+    .filter(it => (activeArea  === 'all' || it.area  === activeArea))
+    .forEach(it => grid.appendChild(makeCard(it)));
+}
+
+renderGrid();
+
+// THEME buttons (existing bar)
+const themeBtns = Array.from(document.querySelectorAll('[data-filter]'));
+themeBtns.forEach(btn => btn.addEventListener('click', () => {
+  themeBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+  btn.setAttribute('aria-pressed', 'true');
+  activeTheme = btn.dataset.filter;
   renderGrid();
+}));
 
-  // --- FILTERS -----------------------------------------------------------
-  const filterBtns = Array.from(document.querySelectorAll('.filters .pill'));
-  filterBtns.forEach(btn => btn.addEventListener('click', () => {
-    filterBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
-    btn.setAttribute('aria-pressed', 'true');
-    renderGrid(btn.dataset.filter);
-  }));
+// AREA buttons (new bar)
+const areaBtns = Array.from(document.querySelectorAll('#areaFilters [data-area]'));
+areaBtns.forEach(btn => btn.addEventListener('click', () => {
+  areaBtns.forEach(b => b.setAttribute('aria-pressed', 'false'));
+  btn.setAttribute('aria-pressed', 'true');
+  activeArea = btn.dataset.area;
+  renderGrid();
+}));
+
 
   // --- DETAIL VIEW & ROUTING --------------------------------------------
   const detail = document.getElementById('detail');
