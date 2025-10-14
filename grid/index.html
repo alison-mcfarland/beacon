@@ -119,6 +119,18 @@
     .ghost { background: transparent; color: #111827; border: 1px solid #e5e7eb; }
 
     footer { max-width: 1100px; margin: 10px auto 40px; padding: 0 20px; color: var(--muted); font-size: 13px; }
+    /* Detail view tags are just labels, not buttons */
+.detail .pill {
+  cursor: default;           /* no hand cursor */
+  pointer-events: none;      /* ignore clicks */
+  background: #eef2f7;       /* softer tag look (optional) */
+  border-color: #e5e7eb;
+}
+.detail .pill:hover {        /* kill hover feedback */
+  opacity: 1;
+  text-decoration: none;
+}
+
   </style>
 </head>
 <body>
